@@ -14,7 +14,8 @@ module.exports = (sequelize, DataTypes) => {
     }
   };
   UtilityType.init({
-    name: DataTypes.STRING
+    name: DataTypes.STRING,
+    unique: true
   }, {
     sequelize,
     modelName: 'UtilityType',

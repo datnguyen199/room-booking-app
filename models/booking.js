@@ -10,12 +10,38 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      // define association here
+      Booking.belongsTo(models.User, {
+        foreignKey: {
+          name: 'userId',
+          allowNull: false
+        },
+        as: 'Bookings'
+      })
     }
   };
   Booking.init({
-    checkInDate: DataTypes.DATE,
-    checkOutDate: DataTypes.DATE
+    checkInDate: {
+      type: DataTypes.DATE,
+      allowNull: false
+    },
+    checkOutDate: {
+      type: DataTypes.DATE,
+      allowNull: false
+    },
+    totalPrice: {
+      type: DataTypes.INTEGER,
+      allowNull: false
+    },
+    refundPrice: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0
+    },
+    cancelDate: {
+      type: DataTypes.DATE
+    },
+    notes: {
+      type: DataTypes.TEXT
+    }
   }, {
     sequelize,
     modelName: 'Booking',

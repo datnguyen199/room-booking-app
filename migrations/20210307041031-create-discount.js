@@ -1,42 +1,26 @@
 'use strict';
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable('Bookings', {
+    await queryInterface.createTable('Discounts', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      checkInDate: {
-        type: Sequelize.DATE,
+      code: {
+        type: Sequelize.STRING,
         allowNull: false
       },
-      checkOutDate: {
-        type: Sequelize.DATE,
-        allowNull: false
-      },
-      totalPrice: {
+      discountPercent: {
         type: Sequelize.INTEGER,
         allowNull: false
       },
-      refundPrice: {
-        type: Sequelize.INTEGER,
-        defaultValue: 0
-      },
-      cancelDate: {
+      startDate: {
         type: Sequelize.DATE
       },
-      notes: {
-        type: Sequelize.TEXT
-      },
-      userId: {
-        type: Sequelize.INTEGER,
-        references: {
-          model: 'Users',
-          key: 'id',
-          as: 'userId'
-        }
+      endDate: {
+        type: Sequelize.DATE
       },
       createdAt: {
         allowNull: false,
@@ -49,6 +33,6 @@ module.exports = {
     });
   },
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable('Bookings');
+    await queryInterface.dropTable('Discounts');
   }
 };

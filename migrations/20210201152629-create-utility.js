@@ -9,10 +9,19 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       description: {
-        type: Sequelize.STRING
+        type: Sequelize.TEXT
       },
       name: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
+        allowNull: false
+      },
+      utilityTypeId: {
+        type: Sequelize.INTEGER,
+        references: {
+          model: 'UtilityTypes',
+          key: 'id',
+          as: 'utilityTypeId'
+        }
       },
       createdAt: {
         allowNull: false,

@@ -14,9 +14,28 @@ module.exports = (sequelize, DataTypes) => {
     }
   };
   Room.init({
-    description: DataTypes.STRING,
-    numberOfBed: DataTypes.INTEGER,
-    rating: DataTypes.INTEGER
+    description: {
+      type: DataTypes.TEXT
+    },
+    numberOfBed: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0
+    },
+    rating: {
+      type: DataTypes.INTEGER
+    },
+    numberOfBedRoom: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0
+    },
+    numberOfBathRoom: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0
+    },
+    priceANight: {
+      type: DataTypes.INTEGER,
+      allowNull: false
+    }
   }, {
     sequelize,
     modelName: 'Room',
