@@ -1,0 +1,23 @@
+{
+  "development": {
+    "username": "root1",
+    "password": "1234",
+    "database": "booking_room_development",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  },
+  "test": {
+    "username": "root1",
+    "password": "1234",
+    "database": "booking_room_test",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  },
+  "production": {
+    "username": "root1",
+    "password": null,
+    "database": "booking_room_production",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  }
+}
