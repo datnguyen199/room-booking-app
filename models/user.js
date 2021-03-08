@@ -26,6 +26,7 @@ module.exports = (sequelize, DataTypes) => {
     email: {
       type: DataTypes.STRING,
       allowNull: false,
+      unique: true,
       validate: {
         isEmail: true
       }
@@ -47,6 +48,9 @@ module.exports = (sequelize, DataTypes) => {
     },
     city: {
       type: DataTypes.STRING
+    },
+    role: {
+      type: DataTypes.INTEGER
     }
   }, {
     sequelize,

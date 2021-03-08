@@ -1,8 +1,37 @@
 var createError = require('http-errors');
 var express = require('express');
+var bodyParser = require('body-parser');
+var swaggerJsdoc = require('swagger-jsdoc');
+var swaggerUi = require('swagger-ui-express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+// const options = {
+//   definition: {
+//     openapi: "3.0.0",
+//     info: {
+//       title: "LogRocket Express API with Swagger",
+//       version: "0.1.0",
+//       description: "This is a simple CRUD API application made with Express and documented with Swagger",
+//       license: {
+//         name: "MIT",
+//         url: "https://spdx.org/licenses/MIT.html",
+//       },
+//       contact: {
+//         name: "LogRocket",
+//         url: "https://logrocket.com",
+//         email: "info@email.com",
+//       },
+//     },
+//     servers: [
+//       {
+//         url: "http://localhost:3000/users",
+//       },
+//     ],
+//   },
+//   apis: ["./routes/users.js"],
+// };
+const specs = swaggerJsdoc(options);
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
@@ -13,6 +42,11 @@ var app = express();
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 
+// app.use(
+//   "/api-docs",
+//   swaggerUi.serve,
+//   swaggerUi.setup(specs)
+// );
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
