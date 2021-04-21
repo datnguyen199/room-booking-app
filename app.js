@@ -8,7 +8,8 @@ var swaggerJsdoc = require("swagger-jsdoc");
 var swaggerUi = require("swagger-ui-express");
 
 var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
+// var usersRouter = require('./routes/api/users');
+var apiRouter = require('./routes/api');
 
 var app = express();
 
@@ -35,7 +36,7 @@ const options = {
       },
     ],
   },
-  apis: ["./routes/index.js"],
+  apis: ["./routes/api/*.js"],
 };
 
 const specs = swaggerJsdoc(options);
@@ -56,7 +57,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
-app.use('/users', usersRouter);
+app.use('/api/v1', apiRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

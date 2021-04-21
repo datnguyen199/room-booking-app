@@ -26,9 +26,13 @@ module.exports = (sequelize, DataTypes) => {
     email: {
       type: DataTypes.STRING,
       allowNull: false,
+      unique: true,
       validate: {
         isEmail: true
       }
+    },
+    phone: {
+      type: DataTypes.STRING
     },
     userName: {
       allowNull: false,
@@ -49,7 +53,8 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING
     },
     role: {
-      type: DataTypes.ENUM
+      type: DataTypes.INTEGER,
+      isIn: [[0, 1, 2]] // 0: user, 1: admin, 2: manager
     }
   }, {
     sequelize,
