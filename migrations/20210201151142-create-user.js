@@ -28,7 +28,7 @@ module.exports = {
         allowNull: false,
         type: Sequelize.STRING
       },
-      id_numer: {
+      idNumber: {
         type: Sequelize.STRING
       },
       district: {
@@ -36,6 +36,10 @@ module.exports = {
       },
       city: {
         type: Sequelize.STRING
+      },
+      role: {
+        type: Sequelize.ENUM,
+        values: ['user', 'admin']
       },
       createdAt: {
         allowNull: false,

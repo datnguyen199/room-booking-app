@@ -39,7 +39,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       type: DataTypes.STRING
     },
-    id_numer: {
+    idNumber: {
       type: DataTypes.STRING
     },
     district: {
@@ -47,6 +47,9 @@ module.exports = (sequelize, DataTypes) => {
     },
     city: {
       type: DataTypes.STRING
+    },
+    role: {
+      type: DataTypes.ENUM
     }
   }, {
     sequelize,
