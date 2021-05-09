@@ -14,15 +14,13 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: {
           name: 'bookingId',
           allowNull: false
-        },
-        as: 'BookingRooms'
+        }
       });
       BookingRoom.belongsTo(models.Room, {
         foreignKey: {
           name: 'roomId',
           allowNull: false
-        },
-        as: 'BookingRooms'
+        }
       })
     }
   };

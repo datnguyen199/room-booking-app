@@ -87,38 +87,88 @@
  *                 $ref: '#/components/schemas/User'
  */
 
-import { Router } from 'express';
-import { hashSync } from 'bcryptjs';
-var router = Router();
+const express = require('express');
+const bcrypt = require('bcrypt');
+const nodemailer = require('nodemailer');
+const crypto = require('crypto');
+const router = express.Router();
+const db = require('../../models');
+const { sequelize } = require('../../models');
 
 /* GET users listing. */
 router.get('/', function(req, res, next) {
   res.send('respond with a resource');
 });
 
+/**
+ * @swagger
+ * /api/v1/sign_up:
+ *  post:
+ *    summary: user sign up
+ *    tags: [Users]
+ *    requestBody:
+ *      require: true
+ *      data:
+ *        application/json:
+ *          schema:
+ *            $ref: '#/components/schemas/User'
+ *    responses:
+ *      200:
+ *        description: sign up user successful
+ *        data:
+ *          application/json:
+ *            schema:
+ *              $ref: '#/components/schemas/User'
+ *      422:
+ *        description: invalid data
+ *      500:
+ *        description: server error
+ */
 router.post('/sign_up', async(req, res) => {
-  try {
-    const user = new User({
+  await sequelize.transaction(async (t) => {
+    var verifiedToken = crypto.randomBytes(16).toString('hex');
+    return db.User.create({
       firstName: req.body.firstName,
       lastName: req.body.lastName,
       userName: req.body.userName,
+      phone: req.body.phone,
       idNumber: req.body.idNumber,
       district: req.body.district,
       city: req.body.city,
       role: req.body.role,
       email: req.body.email,
-      password: hashSync(req.body.password, 8)
-    });
-    const savedUser = await user.save().catch(err => {
-      return res.status(422).json({ errorMessage: err })
+      password: bcrypt.hashSync(req.body.password, 8),
+      confirmationToken: verifiedToken,
+      confirmationExpireAt: new Date().getDate() + 1
+    }, { transaction: t }).then((user) => {
+      let transporter = nodemailer.createTransport({
+        service: 'Sendgrid',
+        auth: { user: process.env.SENDGRID_USERNAME, pass: process.env.SENDGRID_PASSWORD }
+      });
+      let mailOptions = {
+        from: process.env.SENGRID_SENDER,
+        to: user.email, subject: 'Account Verification Token',
+        text: 'Hello,\n\n' + 'Please verify your account by clicking the link: \nhttp:\/\/' + req.headers.host + '\/confirmation\/' + verifiedToken + '.\n'
+      };
+      return transporter.sendMail(mailOptions);
     })
-
-    if(savedUser) {
-      res.status(201).json({data: savedUser})
+  }).then(() => {
+    res.status(200).send({ message: 'A verification link has been sent to your email, please check email to active your account' });
+  }).catch((err) => {
+    console.log(err);
+    if(err.name === 'SequelizeValidationError') {
+      const errObj = {};
+      err.errors.map( er => {
+        errObj[er.path] = er.message;
+      })
+      return res.status(422).json({errorMessage: errObj});
     }
-  } catch(err) {
     res.status(500).json({errorMessage: err});
-  }
+  })
 })
 
-export default router;
+router.post('/confirmation', (req, res) => {
+
+})
+
+module.exports = router;

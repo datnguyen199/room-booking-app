@@ -10,7 +10,7 @@ module.exports = (sequelize, DataTypes) => {
           name: 'userId',
           allowNull: false
         },
-        as: 'Bookings'
+        as: 'bookings'
       })
     }
   };
@@ -28,7 +28,10 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       unique: true,
       validate: {
-        isEmail: true
+        isEmail: {
+          args: true,
+          msg: 'email is not valid'
+        }
       }
     },
     phone: {
@@ -54,7 +57,12 @@ module.exports = (sequelize, DataTypes) => {
     },
     role: {
       type: DataTypes.INTEGER,
-      isIn: [[0, 1, 2]] // 0: user, 1: admin, 2: manager
+      validate: {
+        isIn: {
+          args: [[0, 1, 2]], // 0: user, 1: admin, 2: manager
+          msg: 'role is not valid value'
+        }
+      }
     }
   }, {
     sequelize,

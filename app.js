@@ -6,10 +6,11 @@ var logger = require('morgan');
 var bodyParser = require("body-parser");
 var swaggerJsdoc = require("swagger-jsdoc");
 var swaggerUi = require("swagger-ui-express");
+require('dotenv').config();
 
 var indexRouter = require('./routes/index');
 // var usersRouter = require('./routes/api/users');
-var apiRouter = require('./routes/api');
+var apiRouter = require('./routes/api/users');
 
 var app = express();
 
@@ -32,7 +33,7 @@ const options = {
     },
     servers: [
       {
-        url: "http://localhost:3000/",
+        url: "http://localhost:3000",
       },
     ],
   },
