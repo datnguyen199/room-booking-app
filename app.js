@@ -3,11 +3,49 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+var bodyParser = require("body-parser");
+var swaggerJsdoc = require("swagger-jsdoc");
+var swaggerUi = require("swagger-ui-express");
+require('dotenv').config();
 
 var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
+// var usersRouter = require('./routes/api/users');
+var apiRouter = require('./routes/api/users');
 
 var app = express();
+
+const options = {
+  definition: {
+    openapi: "3.0.0",
+    info: {
+      title: "Room booking app Express API with Swagger",
+      version: "0.1.0",
+      description:
+        "Room booking app api Express and documented with Swagger",
+      license: {
+        name: "MIT",
+        url: "https://spdx.org/licenses/MIT.html",
+      },
+      contact: {
+        name: "DatNguyen",
+        email: "nnd.nguyennhudat@gmail.com",
+      },
+    },
+    servers: [
+      {
+        url: "http://localhost:3000",
+      },
+    ],
+  },
+  apis: ["./routes/api/*.js"],
+};
+
+const specs = swaggerJsdoc(options);
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(specs)
+);
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -20,7 +58,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
-app.use('/users', usersRouter);
+app.use('/api/v1', apiRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

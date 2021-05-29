@@ -1,4 +1,7 @@
 'use strict';
+
+const { sequelize } = require("../models");
+
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable('Users', {
@@ -20,6 +23,9 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: false
       },
+      phone: {
+        type: Sequelize.STRING
+      },
       userName: {
         allowNull: false,
         type: Sequelize.STRING
@@ -28,7 +34,7 @@ module.exports = {
         allowNull: false,
         type: Sequelize.STRING
       },
-      id_numer: {
+      idNumber: {
         type: Sequelize.STRING
       },
       district: {
@@ -36,6 +42,20 @@ module.exports = {
       },
       city: {
         type: Sequelize.STRING
+      },
+      role: {
+        type: Sequelize.INTEGER,
+        defaultValue: 0
+      },
+      isActive: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false
+      },
+      confirmationToken: {
+        type: Sequelize.STRING
+      },
+      confirmationExpireAt: {
+        type: Sequelize.DATE
       },
       createdAt: {
         allowNull: false,
