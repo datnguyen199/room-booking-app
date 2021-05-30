@@ -89,11 +89,13 @@
 
 const express = require('express');
 const bcrypt = require('bcrypt');
-const nodemailer = require('nodemailer');
+// const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const router = express.Router();
 const db = require('../../models');
 const { sequelize } = require('../../models');
+const sendMailService = require('../../services/sendMailService');
+const sendMailQueue = require('../../config/bullConfig');
 
 /* GET users listing. */
 router.get('/', function(req, res, next) {
@@ -141,16 +143,21 @@ router.post('/sign_up', async(req, res) => {
       confirmationToken: verifiedToken,
       confirmationExpireAt: new Date().getDate() + 1
     }, { transaction: t }).then((user) => {
-      let transporter = nodemailer.createTransport({
-        service: 'Sendgrid',
-        auth: { user: process.env.SENDGRID_USERNAME, pass: process.env.SENDGRID_PASSWORD }
-      });
-      let mailOptions = {
-        from: process.env.SENGRID_SENDER,
-        to: user.email, subject: 'Account Verification Token',
+      // add job
+      // let transporter = createTransport({
+      //   service: 'Sendgrid',
+      //   auth: { user: process.env.SENDGRID_USERNAME, pass: process.env.SENDGRID_PASSWORD }
+      // });
+      let data = {
+        mailTo: user.email,
+        subject: 'Account Verification Token',
         text: 'Hello,\n\n' + 'Please verify your account by clicking the link: \nhttp:\/\/' + req.headers.host + '\/confirmation\/' + verifiedToken + '.\n'
       };
-      return transporter.sendMail(mailOptions);
+      const options = {
+        attempts: 2,
+      };
+      return sendMailQueue.add(data, options);
+      // return transporter.sendMail(mailOptions);
     })
   }).then(() => {
     res.status(200).send({ message: 'A verification link has been sent to your email, please check email to active your account' });
@@ -166,6 +173,10 @@ router.post('/sign_up', async(req, res) => {
     res.status(500).json({errorMessage: err});
   })
 })
+
+sendMailQueue.process(async job => {
+  sendMailService.sendMail(job.data);
+});
 
 router.post('/confirmation', (req, res) => {
 
