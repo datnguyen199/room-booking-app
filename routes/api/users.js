@@ -139,7 +139,7 @@ router.post('/sign_up', async(req, res) => {
       email: req.body.email,
       password: bcrypt.hashSync(req.body.password, 8),
       confirmationToken: verifiedToken,
-      confirmationExpireAt: new Date().getDate() + 1
+      confirmationExpireAt: new Date(Date.now() + ( 3600 * 1000 * 24)) // exprired after 1 day
     }, { transaction: t }).then((user) => {
       let transporter = nodemailer.createTransport({
         service: 'Sendgrid',
