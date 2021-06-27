@@ -63,6 +63,16 @@ module.exports = (sequelize, DataTypes) => {
           msg: 'role is not valid value'
         }
       }
+    },
+    isActive: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
+    confirmationToken: {
+      type: DataTypes.STRING
+    },
+    confirmationExpireAt: {
+      type: DataTypes.DATE
     }
   }, {
     sequelize,
