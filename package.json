@@ -1,9 +1,11 @@
 {
   "name": "booking-room-app",
   "version": "0.0.0",
+  "main": "app.js",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www"
+    "start": "node ./bin/www",
+    "start-dev": "nodemon app.js"
   },
   "dependencies": {
     "bcrypt": "^5.0.1",
@@ -26,6 +28,7 @@
     "swagger-ui-express": "^4.1.6"
   },
   "devDependencies": {
+    "nodemon": "^2.0.8",
     "sequelize-cli": "^6.2.0"
   }
 }
