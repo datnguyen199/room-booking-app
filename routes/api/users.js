@@ -94,7 +94,9 @@ const crypto = require('crypto');
 const router = express.Router();
 const db = require('../../models');
 const { sequelize } = require('../../models');
+const jwt = require('jsonwebtoken');
 const validateSignIn = require('../../middlewares/validateSignIn');
+const passportConfig = require('../../config/passport');
 
 /* GET users listing. */
 router.get('/', function(req, res, next) {
@@ -181,9 +183,15 @@ router.post('/sign_in', [validateSignIn.checkValidWhenSignIn], (req, res) => {
     } else {
       var passwordValid = bcrypt.compareSync(req.body.password, user.password);
       if(!passwordValid) { return res.status(401).send({ message: 'username or password is wrong!' }) }
-      return res.status(200).send({ message: 'ok' });
+      let payload = { id: user.id };
+      let token = jwt.sign(payload, passportConfig.jwtOptions.secretOrKey);
+      res.status(200).send({ message: 'Login successfull!', accessToken: token });
     }
   })
+});
+
+router.get('/protected', passportConfig.passport.authenticate('jwt', { session: false }), function(req, res) {
+  res.json('Success! You can now see this without a token.');
 });
 
 module.exports = router;
