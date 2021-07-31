@@ -14,8 +14,7 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: {
           name: 'roomTypeId',
           allowNull: false
-        },
-        as: 'Rooms'
+        }
       })
     }
   };

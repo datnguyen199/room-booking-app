@@ -10,7 +10,15 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      // define association here
+      Utility.hasMany(models.RoomUtility, {
+        foreignKey: {
+          name: 'utilityId',
+          allowNull: false
+        }
+      })
+      // Utility.belongsToMany(models.Room, {
+      //   through: models.RoomUtility
+      // })
     }
   };
   Utility.init({
