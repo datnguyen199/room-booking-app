@@ -15,7 +15,16 @@ module.exports = (sequelize, DataTypes) => {
           name: 'roomTypeId',
           allowNull: false
         }
+      });
+      Room.hasMany(models.RoomUtility, {
+        foreignKey: {
+          name: 'roomId',
+          allowNull: false
+        }
       })
+      // Room.belongsToMany(models.Utility, {
+      //   through: models.RoomUtility
+      // })
     }
   };
   Room.init({
