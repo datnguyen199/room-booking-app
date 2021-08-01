@@ -2,6 +2,7 @@
 const {
   Model
 } = require('sequelize');
+const db = require('../models');
 module.exports = (sequelize, DataTypes) => {
   class Room extends Model {
     /**
@@ -25,6 +26,17 @@ module.exports = (sequelize, DataTypes) => {
       // Room.belongsToMany(models.Utility, {
       //   through: models.RoomUtility
       // })
+
+      // scopes be defined here
+      // Room.addScope('defaultScope', {
+      //   include: {
+      //     model: db.BookingRoom,
+      //     include: {
+      //       model: db.Booking
+      //     }
+      //   },
+      //   where: { numberOfBed: 1 }
+      // });
     }
   };
   Room.init({
@@ -33,22 +45,39 @@ module.exports = (sequelize, DataTypes) => {
     },
     numberOfBed: {
       type: DataTypes.INTEGER,
-      defaultValue: 0
+      defaultValue: 1
     },
     rating: {
       type: DataTypes.INTEGER
     },
     numberOfBedRoom: {
       type: DataTypes.INTEGER,
-      defaultValue: 0
+      defaultValue: 1
     },
     numberOfBathRoom: {
       type: DataTypes.INTEGER,
-      defaultValue: 0
+      defaultValue: 1
     },
     priceANight: {
       type: DataTypes.INTEGER,
       allowNull: false
+    },
+    capacity: {
+      type: DataTypes.INTEGER,
+      defaultValue: 1,
+      validate: {
+        max: 50
+      }
+    },
+    status: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      validate: {
+        isIn: {
+          args: [[0, 1, 2]], // 0: free, 1: booking, 2: cancelled
+          msg: 'status is not a valid value'
+        }
+      }
     }
   }, {
     sequelize,
