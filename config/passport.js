@@ -11,14 +11,14 @@ let passportConfig = {};
 jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
 jwtOptions.secretOrKey = process.env.JWT_KEY;
 
-let strategy = new JwtStrategy(jwtOptions, function(jwt_payload, next) {
+let strategy = new JwtStrategy(jwtOptions, function(jwt_payload, done) {
   console.log('payload received', jwt_payload);
   let user = db.User.findOne({ where: { id: jwt_payload.id } });
 
   if (user) {
-    next(null, user);
+    done(null, jwt_payload);
   } else {
-    next(null, false);
+    done(null, false);
   }
 });
 
