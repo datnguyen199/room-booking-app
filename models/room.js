@@ -22,10 +22,10 @@ module.exports = (sequelize, DataTypes) => {
           name: 'roomId',
           allowNull: false
         }
-      })
-      // Room.belongsToMany(models.Utility, {
-      //   through: models.RoomUtility
-      // })
+      });
+      Room.belongsToMany(models.Utility, {
+        through: models.RoomUtility
+      });
 
       // scopes be defined here
       // Room.addScope('defaultScope', {

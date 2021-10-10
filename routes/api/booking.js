@@ -11,16 +11,20 @@ const router = express.Router();
 const db = require('../../models');
 const { sequelize } = require('../../models');
 const validateBooking = require('../../middlewares/validateBooking');
+const booking = require('../../models/booking');
 
 router.post('/booking',[validateBooking.checkSignInBooking, validateBooking.checkDiscountBooking], async (req, res) => {
   // TODO: check if room is booking in range
   try {
     await sequelize.transaction(async (t) => {
-      if(req.user) {
-        // let room = await db.Room.findByPk(req.body.roomId);
-        // if(!room) return res.status(404).send({ message: 'Room is not found!' });
+      // booking when user logged in
+      let room = await db.Room.findByPk(req.body.roomId);
+      if(!room) return res.status(404).send({ message: 'Room is not found!' });
 
-        let totalPrice = 2000 * 3;
+      let totalPrice = room.priceANight * 3,
+        booking = null;
+
+      if(req.user) {
         let bookingOwner = null;
         if(req.body.bookingOwnerIdNumber) {
           bookingOwner = await db.BookingOwner.create({
@@ -30,7 +34,7 @@ router.post('/booking',[validateBooking.checkSignInBooking, validateBooking.chec
             phone: req.body.bookingOwnerPhone
           }, { transaction: t })
         }
-        const booking = await db.Booking.create({
+        booking = await db.Booking.create({
           checkInDate: req.body.checkInDate,
           checkOutDate: req.body.checkOutDate,
           notes: req.body.notes,
@@ -38,11 +42,34 @@ router.post('/booking',[validateBooking.checkSignInBooking, validateBooking.chec
           userId: req.user.id,
           bookingOwnerId: bookingOwner == null ? null : bookingOwner.id
         }, { transaction: t })
-
-        return res.status(200).send({ message: 'booking room successfull!' });
       } else {
-
+        // booking by guest
+        let guestUser = await db.User.create({
+          firstName: req.body.firstName,
+          lastName: req.body.lastName,
+          userName: `guest ${db.User.count() + 1}`,
+          phone: req.body.phone,
+          idNumber: req.body.idNumber,
+          district: req.body.district,
+          city: req.body.city,
+          role: 0,
+          email: req.body.email,
+          password: '123456',
+          isGuest: true
+        }, { transaction: t })
+        booking = await guestUser.createBooking({
+          checkInDate: req.body.checkInDate,
+          checkOutDate: req.body.checkOutDate,
+          notes: req.body.notes,
+          totalPrice: totalPrice
+        }, { transaction: t })
       }
+      await booking.createBookingRoom({
+        roomId: room.id,
+        rentingPriceANight: room.priceANight
+      }, { transaction: t });
+
+      return res.status(200).send({ message: 'booking room successfull!' });
     })
   } catch(error) {
     if(error.name === 'SequelizeValidationError') {
@@ -52,6 +79,7 @@ router.post('/booking',[validateBooking.checkSignInBooking, validateBooking.chec
       })
       return res.status(422).json({errorMessage: errObj});
     }
+    console.log(error);
     res.status(500).json({ message: error } )
   }
 });

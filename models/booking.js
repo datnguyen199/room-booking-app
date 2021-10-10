@@ -17,13 +17,19 @@ module.exports = (sequelize, DataTypes) => {
           allowNull: false
         },
         as: 'Bookings'
-      })
+      });
       Booking.belongsTo(models.BookingOwner, {
         foreignKey: {
           name: 'bookingOwnerId',
           allowNull: true
         }
-      })
+      });
+      Booking.hasMany(models.BookingRoom, {
+        foreignKey: {
+          name: 'bookingId',
+          allowNull: false
+        }
+      });
     }
   };
   Booking.init({
