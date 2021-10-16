@@ -6,12 +6,13 @@
  */
 
 const express = require('express');
-const nodemailer = require('nodemailer');
 const router = express.Router();
 const db = require('../../models');
 const { sequelize } = require('../../models');
 const validateBooking = require('../../middlewares/validateBooking');
 const booking = require('../../models/booking');
+const sendMailService = require('../../services/sendMailService');
+const sendMailQueue = require('../../config/bullConfigMail');
 
 router.post('/booking',[validateBooking.checkSignInBooking, validateBooking.checkDiscountBooking], async (req, res) => {
   // TODO: check if room is booking in range
@@ -69,6 +70,18 @@ router.post('/booking',[validateBooking.checkSignInBooking, validateBooking.chec
         rentingPriceANight: room.priceANight
       }, { transaction: t });
 
+      const options = {
+        attempts: 2,
+      };
+
+      let mailData = {
+        toEmail: 'datnguyenjj@gmail.com',
+        subject: 'Booking room app',
+        content: 'Hello guest,\n\n' + 'you just booked room successfull, thank you!'
+      };
+
+      sendMailQueue.add(mailData, options);
+
       return res.status(200).send({ message: 'booking room successfull!' });
     })
   } catch(error) {
@@ -82,6 +95,10 @@ router.post('/booking',[validateBooking.checkSignInBooking, validateBooking.chec
     console.log(error);
     res.status(500).json({ message: error } )
   }
+});
+
+sendMailQueue.process(async job => {
+  sendMailService.sendConfirmationEmail(job.data);
 });
 
 module.exports = router;
