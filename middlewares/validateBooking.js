@@ -4,7 +4,7 @@ const db = require('../models');
 
 exports.checkSignInBooking =  (req, res, next) => {
   let accessToken = req.headers.authorization;
-  // console.log(JSON.stringify(req.headers));
+
   if(accessToken) {
     passportConfig.passport.authenticate('jwt', { session: true }, function(err, user, info) {
       if(err) { return res.status(401).send({ message: 'Error authenticate!' }); }
@@ -19,8 +19,8 @@ exports.checkSignInBooking =  (req, res, next) => {
 }
 
 exports.checkDiscountBooking =  async (req, res, next) => {
-  let discountCode = req.body.discountCode;
-  let currentTime = moment().format('YYYY-MM-DD hh:mm');
+  let discountCode = req.body.discountCode,
+    currentTime = moment().format('YYYY-MM-DD hh:mm');
   if(discountCode) {
     const discount = await db.Discount.findOne({
       where: { code: discountCode }

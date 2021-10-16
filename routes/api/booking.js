@@ -6,25 +6,29 @@
  */
 
 const express = require('express');
-const nodemailer = require('nodemailer');
 const router = express.Router();
+var moment = require('moment');
 const db = require('../../models');
 const { sequelize } = require('../../models');
 const validateBooking = require('../../middlewares/validateBooking');
-const booking = require('../../models/booking');
+const sendMailService = require('../../services/sendMailService');
+const sendMailQueue = require('../../config/bullConfigMail');
 
 router.post('/booking',[validateBooking.checkSignInBooking, validateBooking.checkDiscountBooking], async (req, res) => {
   // TODO: check if room is booking in range
   try {
     await sequelize.transaction(async (t) => {
-      // booking when user logged in
       let room = await db.Room.findByPk(req.body.roomId);
       if(!room) return res.status(404).send({ message: 'Room is not found!' });
 
-      let totalPrice = room.priceANight * 3,
-        booking = null;
+      let { checkInDate, checkOutDate } = req.body,
+        numberOfNights = moment(checkOutDate).diff(moment(checkInDate), 'days'),
+        totalPrice = room.priceANight * numberOfNights,
+        booking = null, user = req.user;
 
-      if(req.user) {
+      if(user) {
+      // booking when user logged in
+
         let bookingOwner = null;
         if(req.body.bookingOwnerIdNumber) {
           bookingOwner = await db.BookingOwner.create({
@@ -34,17 +38,17 @@ router.post('/booking',[validateBooking.checkSignInBooking, validateBooking.chec
             phone: req.body.bookingOwnerPhone
           }, { transaction: t })
         }
-        booking = await db.Booking.create({
-          checkInDate: req.body.checkInDate,
-          checkOutDate: req.body.checkOutDate,
+        booking = await user.createBooking({
+          checkInDate: checkInDate,
+          checkOutDate: checkOutDate,
           notes: req.body.notes,
           totalPrice: totalPrice,
-          userId: req.user.id,
           bookingOwnerId: bookingOwner == null ? null : bookingOwner.id
         }, { transaction: t })
       } else {
         // booking by guest
-        let guestUser = await db.User.create({
+
+        user = await db.User.create({
           firstName: req.body.firstName,
           lastName: req.body.lastName,
           userName: `guest ${db.User.count() + 1}`,
@@ -57,7 +61,7 @@ router.post('/booking',[validateBooking.checkSignInBooking, validateBooking.chec
           password: '123456',
           isGuest: true
         }, { transaction: t })
-        booking = await guestUser.createBooking({
+        booking = await user.createBooking({
           checkInDate: req.body.checkInDate,
           checkOutDate: req.body.checkOutDate,
           notes: req.body.notes,
@@ -68,6 +72,18 @@ router.post('/booking',[validateBooking.checkSignInBooking, validateBooking.chec
         roomId: room.id,
         rentingPriceANight: room.priceANight
       }, { transaction: t });
+
+      const options = {
+        attempts: 2,
+      };
+
+      let mailData = {
+        toEmail: `${user.email}`,
+        subject: 'Booking room app',
+        content: `Hi ${user.userName}, you just booked room successfull, thank you!`
+      };
+
+      sendMailQueue.add(mailData, options);
 
       return res.status(200).send({ message: 'booking room successfull!' });
     })
@@ -82,6 +98,10 @@ router.post('/booking',[validateBooking.checkSignInBooking, validateBooking.chec
     console.log(error);
     res.status(500).json({ message: error } )
   }
+});
+
+sendMailQueue.process(async job => {
+  sendMailService.sendConfirmationEmail(job.data);
 });
 
 module.exports = router;
