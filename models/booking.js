@@ -1,4 +1,5 @@
 'use strict';
+const moment = require('moment');
 const {
   Model
 } = require('sequelize');
@@ -16,7 +17,19 @@ module.exports = (sequelize, DataTypes) => {
           allowNull: false
         },
         as: 'Bookings'
-      })
+      });
+      Booking.belongsTo(models.BookingOwner, {
+        foreignKey: {
+          name: 'bookingOwnerId',
+          allowNull: true
+        }
+      });
+      Booking.hasMany(models.BookingRoom, {
+        foreignKey: {
+          name: 'bookingId',
+          allowNull: false
+        }
+      });
     }
   };
   Booking.init({
@@ -26,7 +39,14 @@ module.exports = (sequelize, DataTypes) => {
     },
     checkOutDate: {
       type: DataTypes.DATE,
-      allowNull: false
+      allowNull: false,
+      validate: {
+        isGreaterThanCheckInDate(checkOutTime) {
+          if(moment(new Date(checkOutTime)).isBefore(moment(new Date(this.checkInDate)))) {
+            throw new Error('checkout date must be after checkin date!');
+          }
+        }
+      }
     },
     totalPrice: {
       type: DataTypes.INTEGER,

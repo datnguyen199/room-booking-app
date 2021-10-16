@@ -15,10 +15,10 @@ module.exports = (sequelize, DataTypes) => {
           name: 'utilityId',
           allowNull: false
         }
-      })
-      // Utility.belongsToMany(models.Room, {
-      //   through: models.RoomUtility
-      // })
+      });
+      Utility.belongsToMany(models.Room, {
+        through: models.RoomUtility
+      });
     }
   };
   Utility.init({

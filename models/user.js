@@ -64,6 +64,10 @@ module.exports = (sequelize, DataTypes) => {
         }
       }
     },
+    isGuest: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
     isActive: {
       type: DataTypes.BOOLEAN,
       defaultValue: false
