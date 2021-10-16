@@ -28,6 +28,13 @@ module.exports = (sequelize, DataTypes) => {
       });
 
       // scopes be defined here
+
+      Room.addScope('byStatusAndRating', (status, rating) => ({
+        where: {
+          status: status, rating: rating
+        }})
+      );
+
       // Room.addScope('defaultScope', {
       //   include: {
       //     model: db.BookingRoom,
@@ -79,9 +86,20 @@ module.exports = (sequelize, DataTypes) => {
         }
       }
     }
-  }, {
+  },
+  {
+    defaultScope: {
+      where: {
+        status: 0
+      }
+    },
+    scopes: {
+      available: {
+        where: { status: 0 }
+      }
+    },
     sequelize,
-    modelName: 'Room',
+    modelName: 'Room'
   });
   return Room;
 };
