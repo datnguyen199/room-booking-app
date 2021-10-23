@@ -10,15 +10,16 @@ let jwtOptions = {};
 let passportConfig = {};
 jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
 jwtOptions.secretOrKey = process.env.JWT_KEY;
+jwtOptions.passReqToCallback = true;
 
-let strategy = new JwtStrategy(jwtOptions, function(jwt_payload, next) {
-  console.log('payload received', jwt_payload);
-  let user = db.User.findOne({ where: { id: jwt_payload.id } });
+let strategy = new JwtStrategy(jwtOptions, async function(req, jwt_payload, done) {
+  let user = await db.User.findOne({ where: { id: jwt_payload.id } });
 
   if (user) {
-    next(null, user);
+    req.user = user;
+    done(null, user);
   } else {
-    next(null, false);
+    done(null, false);
   }
 });
 
