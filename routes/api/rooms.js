@@ -11,7 +11,7 @@
  const db = require('../../models');
  const { Op } = require('sequelize');
 
-router.get('/search_room', (req, res) => {
+router.get('/room_searching', (req, res) => {
   let orCondition = { [Op.or]: [] }
   let limit = req.query.limit || 10;
   let offset = req.query.offset || 1;

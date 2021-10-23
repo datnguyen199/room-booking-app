@@ -16,6 +16,7 @@ const sendMailQueue = require('../../config/bullConfigMail');
 
 router.post('/booking',[validateBooking.checkSignInBooking, validateBooking.checkDiscountBooking], async (req, res) => {
   // TODO: check if room is booking in range
+
   try {
     await sequelize.transaction(async (t) => {
       // booking when user logged in

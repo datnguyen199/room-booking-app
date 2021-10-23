@@ -190,7 +190,7 @@ router.post('/sign_in', [validateSignIn.checkValidWhenSignIn], (req, res) => {
 });
 
 router.get('/protected', passportConfig.passport.authenticate('jwt', { session: false }), function(req, res) {
-  res.json('Success! You can now see this without a token.');
+  res.json({ message: req.user });
 });
 
 module.exports = router;
