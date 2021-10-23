@@ -30,6 +30,14 @@ module.exports = {
         type: Sequelize.INTEGER,
         allowNull: false
       },
+      status: {
+        type: Sequelize.INTEGER,
+        defaultValue: 0
+      },
+      capacity: {
+        type: Sequelize.INTEGER,
+        defaultValue: 1
+      },
       roomTypeId: {
         type: Sequelize.INTEGER,
         references: {
