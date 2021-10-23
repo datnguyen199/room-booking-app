@@ -178,11 +178,10 @@ router.post('/sign_in', [validateSignIn.checkValidWhenSignIn], (req, res) => {
   db.User.findOne({where: { userName: req.body.userName }}).then(user => {
     if(!user) {
       return res.status(401).send({ message: 'username or password is wrong!' });
-    } else if (!user.isActive) {
-      return res.status(302).send({ message: 'Your account have not active yet, please active you account!'});
     } else {
       var passwordValid = bcrypt.compareSync(req.body.password, user.password);
       if(!passwordValid) { return res.status(401).send({ message: 'username or password is wrong!' }) }
+      if(!user.isActive) { return res.status(302).send({ message: 'Your account have not active yet, please active you account!'}) }
       let payload = { id: user.id };
       let token = jwt.sign(payload, passportConfig.jwtOptions.secretOrKey);
       res.status(200).send({ message: 'Login successfull!', accessToken: token });
