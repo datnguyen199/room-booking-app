@@ -17,9 +17,10 @@ router.get('/room_searching', (req, res) => {
   let offset = req.query.offset || 1;
   let lowestPrice = req.query.lowestPrice || 0;
   let highestPrice = req.query.highestPrice || 50000000;
+  let paramSearch = req.query.param_search || '';
   let conditionSearch = {
     [Op.and]: [
-      { description: { [Op.like]: `%${req.query.param_search}%` } },
+      { description: { [Op.like]: `%${paramSearch}%` } },
       { priceANight: { [Op.between]: [parseInt(lowestPrice), parseInt(highestPrice)] } }
     ]
   };
@@ -68,7 +69,7 @@ router.get('/room_searching', (req, res) => {
   //   ]
   // }
 
-  conditionSearch[Op.and].push({ '$RoomType.description$': { [Op.like]: `%${req.query.param_search}%` } })
+  conditionSearch[Op.and].push({ '$RoomType.description$': { [Op.like]: `%${paramSearch}%` } })
 
   let rooms = db.Room.findAll({
     attributes: { exclude: ['createdAt', 'updatedAt'] },
@@ -81,7 +82,7 @@ router.get('/room_searching', (req, res) => {
       include: {
         model: db.Utility,
         where: {
-          description: { [Op.like]: `%${req.query.param_search}%` }
+          description: { [Op.like]: `%${paramSearch}%` }
         }
       }
     }],
