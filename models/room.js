@@ -23,9 +23,9 @@ module.exports = (sequelize, DataTypes) => {
           allowNull: false
         }
       });
-      Room.belongsToMany(models.Utility, {
-        through: models.RoomUtility
-      });
+      // Room.belongsToMany(models.Utility, {
+      //   through: models.RoomUtility
+      // });
 
       // scopes be defined here
       // Room.addScope('defaultScope', {

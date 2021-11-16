@@ -16,9 +16,9 @@ module.exports = (sequelize, DataTypes) => {
           allowNull: false
         }
       });
-      Utility.belongsToMany(models.Room, {
-        through: models.RoomUtility
-      });
+      // Utility.belongsToMany(models.Room, {
+      //   through: models.RoomUtility
+      // });
     }
   };
   Utility.init({
