@@ -11,48 +11,61 @@
  const db = require('../../models');
  const { Op } = require('sequelize');
 
-router.get('/search_room', (req, res) => {
-  let orCondition = { [Op.or]: [] }
+router.get('/room_searching', async (req, res) => {
+  let andCondition = { [Op.and]: [] }
   let limit = req.query.limit || 10;
   let offset = req.query.offset || 1;
-  let lowestPrice = req.query.lowestPrice || 0;
-  let highestPrice = req.query.highestPrice || 50000000;
+  let lowestPrice = parseInt(req.query.lowestPrice);
+  let highestPrice = parseInt(req.query.highestPrice);
   let paramSearch = req.query.param_search || '';
-  let conditionSearch = {
-    [Op.and]: [
-      { description: { [Op.like]: `%${paramSearch}%` } },
-      { priceANight: { [Op.between]: [parseInt(lowestPrice), parseInt(highestPrice)] } }
-    ]
-  };
+  let conditionSearch = {};
 
-  if(req.query.numberOfBed !== undefined || req.query.numberOfBathRoom !== undefined || req.query.numberOfBedRoom !== undefined) {
-    conditionSearch = Object.assign(conditionSearch, orCondition);
+  if(paramSearch !== '') {
+    conditionSearch[Op.or] = {
+      description: { [Op.like]: `%${paramSearch}%` },
+      '$RoomType.description$': { [Op.like]: `%${paramSearch}%` },
+      '$RoomUtilities.Utility.name$': { [Op.like]: `%${paramSearch}%` },
+      '$RoomUtilities.Utility.description$': { [Op.like]: `%${paramSearch}%` }
+    };
   }
 
-  if(req.query.numberOfBed !== undefined) {
-    conditionSearch[Op.or].push({ numberOfBed: { [Op.eq]: parseInt(req.query.numberOfBed) } })
+  if(req.query.numberOfBed || req.query.numberOfBathRoom ||
+    req.query.numberOfBedRoom || req.query.roomTypeIds || req.query.utilityIds) {
+    conditionSearch = Object.assign(conditionSearch, andCondition);
   }
 
-  if(req.query.numberOfBathRoom !== undefined) {
-    conditionSearch[Op.or].push({ numberOfBathRoom: { [Op.eq]: parseInt(req.query.numberOfBathRoom) } })
+  if(req.query.numberOfBed) {
+    conditionSearch[Op.and].push({ numberOfBed: { [Op.eq]: parseInt(req.query.numberOfBed) } })
   }
 
-  if(req.query.numberOfBedRoom !== undefined) {
-    conditionSearch[Op.or].push({ numberOfBedRoom: { [Op.eq]: parseInt(req.query.numberOfBedRoom) } })
+  if(req.query.numberOfBathRoom) {
+    conditionSearch[Op.and].push({ numberOfBathRoom: { [Op.eq]: parseInt(req.query.numberOfBathRoom) } })
   }
 
-  if(req.query.roomTypeIds !== undefined) {
+  if(req.query.numberOfBedRoom) {
+    conditionSearch[Op.and].push({ numberOfBedRoom: { [Op.eq]: parseInt(req.query.numberOfBedRoom) } })
+  }
+
+  if(req.query.roomTypeIds) {
     conditionSearch[Op.and].push(
       { '$RoomType.id$': { [Op.in]: req.query.roomTypeIds.split(',').map(Number) } }
     )
   }
 
-  if(req.query.utilityIds !== undefined) {
+  if(req.query.utilityIds) {
     conditionSearch[Op.and].push(
       { '$RoomUtilities.Utility.id$': { [Op.in]: req.query.utilityIds.split(',').map(Number) } }
     )
   }
 
+  if(Number.isInteger(lowestPrice) && Number.isInteger(highestPrice)
+      && lowestPrice < highestPrice && (lowestPrice > 0 && lowestPrice <= 49999999)) {
+    if(conditionSearch[Op.and]) {
+      conditionSearch[Op.and].push({ priceANight: { [Op.between]: [lowestPrice, highestPrice] } })
+    } else {
+      conditionSearch[Op.and] = { priceANight: { [Op.between]: [lowestPrice, highestPrice] } }
+    }
+  }
 
   // condition search
   // {
@@ -68,28 +81,24 @@ router.get('/search_room', (req, res) => {
   //     { '$RoomUtilities.Utility.id$': { [Op.in]: [3, 4]}}
   //   ]
   // }
+  // conditionSearch[Op.and].push({ '$RoomType.description$': { [Op.like]: `%${paramSearch}%` } })
 
-  conditionSearch[Op.and].push({ '$RoomType.description$': { [Op.like]: `%${paramSearch}%` } })
-
-  let rooms = db.Room.findAll({
+  let rooms = await db.Room.findAll({
     attributes: { exclude: ['createdAt', 'updatedAt'] },
     subQuery: false,
     include: [ {
-      model: db.RoomType
-    },
-      {
+      model: db.RoomType,
+    }, {
       model: db.RoomUtility,
       include: {
-        model: db.Utility,
-        where: {
-          description: { [Op.like]: `%${paramSearch}%` }
-        }
+        model: db.Utility
       }
     }],
     where: conditionSearch,
-    offset: offset,
+    offset: (offset - 1) * limit,
     limit: limit
   });
+
   res.status(200).send({ data: rooms });
 });
 
