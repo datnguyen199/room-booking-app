@@ -98,6 +98,7 @@ const jwt = require('jsonwebtoken');
 const validateSignIn = require('../../middlewares/validateSignIn');
 const passportConfig = require('../../config/passport');
 const sendMailQueue = require('../../config/bullConfigMail');
+const moment = require('moment');
 
 /* GET users listing. */
 router.get('/', function(req, res, next) {
@@ -151,7 +152,7 @@ router.post('/sign_up', async(req, res) => {
       let mailData = {
         toEmail: `${user.email}`,
         subject: 'Booking room app',
-        content: `Hi ${user.userName}, Please verify your account by clicking the link: http:\/\/${req.headers.host}\/confirmation\/${verifiedToken}`
+        content: `Hi ${user.userName}, Please verify your account by clicking the link: http:\/\/${req.headers.host}\/confirmation\/?token=${verifiedToken}`
       };
 
       return sendMailQueue.add(mailData, options);
@@ -171,8 +172,26 @@ router.post('/sign_up', async(req, res) => {
   })
 })
 
-router.post('/confirmation', (req, res) => {
+router.get('/confirmation', async (req, res) => {
+  try {
+    let confirmToken = req.query.token;
+    let user = await db.User.findOne({ where: { isGuest: false, confirmationToken: confirmToken }, attributes: ['id', 'isActive', 'confirmationExpireAt'] });
+    if(!user || user.isActive) return res.status(400).send({ message: 'bad request' });
+    if(moment().isAfter(moment(user.confirmationExpireAt))) {
+      return res.status(400).send({ message: 'token is expired!' });
+    }
 
+    user.set({
+      isActive: true,
+      confirmationToken: null,
+      confirmationExpireAt: null
+    });
+    await user.save();
+    res.status(200).send({ message: 'active user success!' });
+  } catch(err) {
+    console.log(err);
+    res.status(500).send({ message: 'server error' });
+  }
 });
 
 router.post('/sign_in', [validateSignIn.checkValidWhenSignIn], (req, res) => {

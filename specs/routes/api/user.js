@@ -10,6 +10,7 @@ let should = chai.should();
 let expect = chai.expect;
 const request = require('supertest');
 const sendMailQueue = require('../../../config/bullConfigMail');
+const moment = require('moment');
 
 chai.use(chaiHttp);
 
@@ -40,6 +41,18 @@ describe('User API', () => {
         let inactiveUser = await factory.create('user');
         let userParams = await factory.attrs('user');
         userParams['email'] = inactiveUser.email;
+
+        let res = await chai.request(server)
+                            .post('/api/v1/sign_up')
+                            .send(userParams);
+        res.should.have.status(201);
+        expect(await db.User.count()).to.equal(2);
+      })
+
+      it('sign up successfull with same userName of inactive user', async () => {
+        let inactiveUser = await factory.create('user');
+        let userParams = await factory.attrs('user');
+        userParams['userName'] = inactiveUser.userName;
 
         let res = await chai.request(server)
                             .post('/api/v1/sign_up')
@@ -141,6 +154,57 @@ describe('User API', () => {
                                        .expect('Content-Type', /json/)
                                        .expect(401);
         expect(res.body['message']).to.equal('username or password is wrong!');
+      })
+    })
+  })
+
+  describe('GET /confirmation', () => {
+    describe('when valid token', () => {
+      it('active user successfull', async () => {
+        let user = await factory.create('user');
+        let res = await request(server).get('/api/v1/confirmation')
+                                       .query({ token: user.confirmationToken })
+                                       .expect('Content-Type', /json/)
+                                       .expect(200);
+        await user.reload();
+        expect(user.isActive).to.be.true
+        expect(user.confirmationToken).to.be.null
+        expect(user.confirmationExpireAt).to.be.null
+      })
+    })
+
+    describe('when invalid token', () => {
+      it('return bad request with invalid token', async () => {
+        await request(server).get('/api/v1/confirmation')
+                             .query({ token: 'invalid token' })
+                             .expect('Content-Type', /json/)
+                             .expect(400);
+      })
+
+      it('return error with guest user', async () => {
+        let guestUser = await factory.create('guestUser');
+        await request(server).get('/api/v1/confirmation')
+                             .query({ token: guestUser.confirmationToken })
+                             .expect('Content-Type', /json/)
+                             .expect(400);
+      })
+
+      it('return error with user already active', async () => {
+        let activeUser = await factory.create('activeUser');
+        await request(server).get('/api/v1/confirmation')
+                             .query({ token: activeUser.confirmationToken })
+                             .expect('Content-Type', /json/)
+                             .expect(400);
+      })
+
+      it('return error if token is exprired', async () => {
+        let user = await factory.create('user', { confirmationExpireAt: moment().subtract(1, 'days')});
+        let res = await request(server).get('/api/v1/confirmation')
+                             .query({ token: user.confirmationToken })
+                             .expect('Content-Type', /json/)
+                             .expect(400);
+
+        expect(res.body['message']).to.equal('token is expired!');
       })
     })
   })
