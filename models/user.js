@@ -1,4 +1,5 @@
 'use strict';
+const bcrypt = require('bcrypt');
 const {
   Model
 } = require('sequelize');
@@ -79,6 +80,13 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DATE
     }
   }, {
+    hooks: {
+      beforeSave: (user, options) => {
+        if(user.isNewRecord || user.changed('password')) {
+          user.password = bcrypt.hashSync(user.password, 8)
+        }
+      }
+    },
     sequelize,
     modelName: 'User',
   });

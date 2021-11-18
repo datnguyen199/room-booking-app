@@ -14,6 +14,8 @@ var userRouter = require('./routes/api/users');
 var roomRouter = require('./routes/api/rooms');
 var bookingRouter = require('./routes/api/booking');
 let passportConfig = require('./config/passport');
+const sendMailService = require('./services/sendMailService');
+const sendMailQueue = require('./config/bullConfigMail');
 
 var app = express();
 
@@ -49,6 +51,10 @@ app.use(
   swaggerUi.serve,
   swaggerUi.setup(specs)
 );
+
+sendMailQueue.process(async job => {
+  sendMailService.sendConfirmationEmail(job.data);
+});
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
