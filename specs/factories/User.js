@@ -15,5 +15,5 @@ module.exports = (factory, db) => {
 
   factory.extend('user', 'activeUser', { isActive: true });
   factory.extend('user', 'guestUser',
-    { isGuest: true, isActive: true, userName: factory.sequence('User.userName', n => `guest${n}`) });
+    { isGuest: true, isActive: false, userName: factory.sequence('User.userName', n => `guest${n}`) });
 }

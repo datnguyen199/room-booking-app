@@ -22,32 +22,48 @@ describe('User API', () => {
     sinon.restore();
   })
 
-  // const myExternalLibrary = {
-  //   getJSON(url) {
-  //     return this.otherMethod(url);
-  //   },
-  //   otherMethod(url) {
-  //     return url;
-  //   },
-  // };
-
   describe('POST /sign_up', () => {
     describe('when valid data', () => {
       it('sign up successfully', async () => {
+        const addQueue = sinon.spy(sendMailQueue, 'add');
         let userParams = await factory.attrs('guestUser');
         let res = await chai.request(server)
                             .post('/api/v1/sign_up')
                             .send(userParams);
         res.should.have.status(201);
         expect(await db.User.count()).to.equal(1);
+        addQueue.restore();
+        sinon.assert.calledOnce(addQueue);
+      })
 
-        // const addQueue = sinon.spy(sendMailQueue, 'add');
-        // sinon.assert.calledOnce(addQueue);
+      it('sign up successfull with same email of inactive user', async () => {
+        let inactiveUser = await factory.create('user');
+        let userParams = await factory.attrs('user');
+        userParams['email'] = inactiveUser.email;
+
+        let res = await chai.request(server)
+                            .post('/api/v1/sign_up')
+                            .send(userParams);
+        res.should.have.status(201);
+        expect(await db.User.count()).to.equal(2);
+      })
+
+      it('sign up successfull with same userName of inactive user', async () => {
+        let inactiveUser = await factory.create('user');
+        let userParams = await factory.attrs('user');
+        userParams['userName'] = inactiveUser.userName;
+
+        let res = await chai.request(server)
+                            .post('/api/v1/sign_up')
+                            .send(userParams);
+        res.should.have.status(201);
+        expect(await db.User.count()).to.equal(2);
       })
     })
 
     describe('when invalid data', () => {
       it('sign up failed', async () => {
+        const addQueue = sinon.spy(sendMailQueue, 'add');
         let userParams = {
           firstName: 'firstName',
           lastName: 'lastName',
@@ -60,15 +76,32 @@ describe('User API', () => {
         res.should.have.status(422);
         expect(await db.User.count()).to.equal(0);
         expect(res.body).to.have.property('errorMessage');
+        sinon.assert.callCount(addQueue, 0);
       })
-      // const url = 'url';
-      // const m1 = sinon.spy(myExternalLibrary, 'getJSON');
-      // const m2 = sinon.stub(myExternalLibrary, 'otherMethod');
-      // m2.returns('new url');
-      // let rs = myExternalLibrary.getJSON(url);
-      // sinon.assert.calledOnce(m1);
-      // sinon.assert.calledOnce(m2);
-      // expect(rs).to.equal('new url');
+
+      it('sign up failed with email used by active user', async () => {
+        let activeUser = await factory.create('activeUser');
+        let userParams = await factory.attrs('user');
+        userParams['email'] = activeUser.email;
+
+        let res = await chai.request(server)
+                            .post('/api/v1/sign_up')
+                            .send(userParams);
+        res.should.have.status(422);
+        expect(await db.User.count()).to.equal(1);
+      })
+
+      it('sign up failed with userName used by active user', async () => {
+        let activeUser = await factory.create('activeUser');
+        let userParams = await factory.attrs('user');
+        userParams['userName'] = activeUser.userName;
+
+        let res = await chai.request(server)
+                            .post('/api/v1/sign_up')
+                            .send(userParams);
+        res.should.have.status(422);
+        expect(await db.User.count()).to.equal(1);
+      })
     })
   })
 
@@ -84,9 +117,9 @@ describe('User API', () => {
       })
 
       it('sign in failed with inactive user', async () => {
-        let user = await factory.create('user');
+        let inactiveUser = await factory.create('user');
         await request(server).post('/api/v1/sign_in')
-                             .send({userName: user.userName, password: 'Aa@123456' })
+                             .send({userName: inactiveUser.userName, password: 'Aa@123456' })
                              .expect('Content-Type', /json/)
                              .expect(302);
       })

@@ -27,11 +27,24 @@ module.exports = (sequelize, DataTypes) => {
     email: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
+      unique: {
+        args: true,
+        msg: 'email already in use!'
+      },
       validate: {
         isEmail: {
           args: true,
           msg: 'email is not valid'
+        },
+        isUnique: function(value, next) {
+          var self = this;
+          User.findOne({ where: { email: value, isActive: true }, attributes: ['id'] })
+            .then(function(err, user) {
+              if(err) return next(err);
+              if(user && self.id !== user.id) return next('Email already in use!');
+
+              next();
+            })
         }
       }
     },
@@ -41,7 +54,19 @@ module.exports = (sequelize, DataTypes) => {
     userName: {
       allowNull: false,
       type: DataTypes.STRING,
-      unique: true
+      unique: true,
+      validate: {
+        isUnique: function(value, next) {
+          var self = this;
+          User.findOne({ where: { userName: value, isActive: true }, attributes: ['id'] })
+            .then(function(err, user) {
+              if(err) return next(err);
+              if(user && self.id !== user.id) return next('Username already in use!');
+
+              next();
+            })
+        }
+      }
     },
     password: {
       allowNull: false,
@@ -81,8 +106,8 @@ module.exports = (sequelize, DataTypes) => {
     }
   }, {
     hooks: {
-      beforeSave: (user, options) => {
-        if(user.isNewRecord || user.changed('password')) {
+      afterValidate: (user, options) => {
+        if(user.changed('password')) {
           user.password = bcrypt.hashSync(user.password, 8)
         }
       }
