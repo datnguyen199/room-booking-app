@@ -11,7 +11,6 @@ var moment = require('moment');
 const db = require('../../models');
 const { sequelize } = require('../../models');
 const validateBooking = require('../../middlewares/validateBooking');
-const sendMailService = require('../../services/sendMailService');
 const sendMailQueue = require('../../config/bullConfigMail');
 
 router.post('/booking',[validateBooking.checkSignInBooking, validateBooking.checkDiscountBooking], async (req, res) => {
@@ -98,10 +97,6 @@ router.post('/booking',[validateBooking.checkSignInBooking, validateBooking.chec
     console.log(error);
     res.status(500).json({ message: error } )
   }
-});
-
-sendMailQueue.process(async job => {
-  sendMailService.sendConfirmationEmail(job.data);
 });
 
 module.exports = router;

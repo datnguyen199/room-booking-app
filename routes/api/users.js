@@ -97,6 +97,7 @@ const { sequelize } = require('../../models');
 const jwt = require('jsonwebtoken');
 const validateSignIn = require('../../middlewares/validateSignIn');
 const passportConfig = require('../../config/passport');
+const sendMailQueue = require('../../config/bullConfigMail');
 
 /* GET users listing. */
 router.get('/', function(req, res, next) {
@@ -140,23 +141,23 @@ router.post('/sign_up', async(req, res) => {
       city: req.body.city,
       role: req.body.role,
       email: req.body.email,
-      password: bcrypt.hashSync(req.body.password, 8),
+      password: req.body.password,
       confirmationToken: verifiedToken,
       confirmationExpireAt: new Date(Date.now() + ( 3600 * 1000 * 24)) // exprired after 1 day
     }, { transaction: t }).then((user) => {
-      let transporter = nodemailer.createTransport({
-        service: 'Sendgrid',
-        auth: { user: process.env.SENDGRID_USERNAME, pass: process.env.SENDGRID_PASSWORD }
-      });
-      let mailOptions = {
-        from: process.env.SENGRID_SENDER,
-        to: user.email, subject: 'Account Verification Token',
-        text: 'Hello,\n\n' + 'Please verify your account by clicking the link: \nhttp:\/\/' + req.headers.host + '\/confirmation\/' + verifiedToken + '.\n'
+      const options = {
+        attempts: 2,
       };
-      return transporter.sendMail(mailOptions);
+      let mailData = {
+        toEmail: `${user.email}`,
+        subject: 'Booking room app',
+        content: `Hi ${user.userName}, Please verify your account by clicking the link: http:\/\/${req.headers.host}\/confirmation\/${verifiedToken}`
+      };
+
+      return sendMailQueue.add(mailData, options);
     })
   }).then(() => {
-    res.status(200).send({ message: 'A verification link has been sent to your email, please check email to active your account' });
+    res.status(201).send({ message: 'A verification link has been sent to your email, please check email to active your account' });
   }).catch((err) => {
     console.log(err);
     if(err.name === 'SequelizeValidationError') {
@@ -175,7 +176,7 @@ router.post('/confirmation', (req, res) => {
 });
 
 router.post('/sign_in', [validateSignIn.checkValidWhenSignIn], (req, res) => {
-  db.User.findOne({where: { userName: req.body.userName }}).then(user => {
+  db.User.findOne({where: { userName: req.body.userName, isGuest: false }}).then(user => {
     if(!user) {
       return res.status(401).send({ message: 'username or password is wrong!' });
     } else {

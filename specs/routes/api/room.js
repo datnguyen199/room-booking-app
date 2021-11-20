@@ -1,10 +1,10 @@
 process.env.NODE_ENV = 'test';
 
 const chai = require('chai');
-const db = require('../../models');
+const db = require('../../../models');
 let chaiHttp = require('chai-http');
-let server = require('../../app');
-let factory = require('../helpers');
+let server = require('../../../app');
+let factory = require('../../helpers');
 let should = chai.should();
 let expect = chai.expect;
 const request = require('supertest');
