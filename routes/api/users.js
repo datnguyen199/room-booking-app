@@ -87,18 +87,17 @@
  *                 $ref: '#/components/schemas/User'
  */
 
-const express = require('express');
-const bcrypt = require('bcrypt');
-const nodemailer = require('nodemailer');
-const crypto = require('crypto');
-const router = express.Router();
-const db = require('../../models');
-const { sequelize } = require('../../models');
-const jwt = require('jsonwebtoken');
-const validateSignIn = require('../../middlewares/validateSignIn');
-const passportConfig = require('../../config/passport');
-const sendMailQueue = require('../../config/bullConfigMail');
-const moment = require('moment');
+const express = require('express'),
+  bcrypt = require('bcrypt'),
+  crypto = require('crypto'),
+  router = express.Router(),
+  db = require('../../models'),
+  { sequelize } = require('../../models'),
+  jwt = require('jsonwebtoken'),
+  validateSignIn = require('../../middlewares/validateSignIn'),
+  passportConfig = require('../../config/passport'),
+  sendMailQueue = require('../../config/bullConfigMail'),
+  moment = require('moment'), auth = require('../../auth');
 
 /* GET users listing. */
 router.get('/', function(req, res, next) {
@@ -194,20 +193,86 @@ router.get('/confirmation', async (req, res) => {
   }
 });
 
-router.post('/sign_in', [validateSignIn.checkValidWhenSignIn], (req, res) => {
-  db.User.findOne({where: { userName: req.body.userName, isGuest: false }}).then(user => {
-    if(!user) {
-      return res.status(401).send({ message: 'username or password is wrong!' });
-    } else {
-      var passwordValid = bcrypt.compareSync(req.body.password, user.password);
-      if(!passwordValid) { return res.status(401).send({ message: 'username or password is wrong!' }) }
-      if(!user.isActive) { return res.status(302).send({ message: 'Your account have not active yet, please active you account!'}) }
-      let payload = { id: user.id };
-      let token = jwt.sign(payload, passportConfig.jwtOptions.secretOrKey);
-      res.status(200).send({ message: 'Login successfull!', accessToken: token });
+router.post('/sign_in', [validateSignIn.checkValidWhenSignIn], async (req, res) => {
+  let user = await db.User.findOne({where: { userName: req.body.userName, isGuest: false }})
+  if(!user) {
+    return res.status(401).send({ message: 'username or password is wrong!' });
+  } else {
+    let passwordValid = bcrypt.compareSync(req.body.password, user.password);
+    if(!passwordValid) { return res.status(401).send({ message: 'username or password is wrong!' }) }
+    if(!user.isActive) { return res.status(302).send({ message: 'Your account have not active yet, please active you account!'}) }
+    await sequelize.transaction(async (t) => {
+      try {
+        let payload = { id: user.id },
+          token = jwt.sign(payload, passportConfig.jwtOptions.secretOrKey),
+          refreshToken = auth.getRefreshToken(payload);
+
+        user.refreshToken = refreshToken;
+        await user.save({ transaction: t });
+        await user.createUserToken({
+          token: token
+        }, { transaction: t });
+
+        res.status(200).send({ message: 'Login successfull!', accessToken: token, refreshToken: refreshToken });
+      } catch(error) {
+        console.log(error);
+        res.status(500).json({ message: error } )
+      }
+    })
+  }
+});
+
+router.post('/refresh_token', async function(req, res) {
+  const { signedCookies = {} } = req;
+  const { refreshToken } = signedCookies;
+  if(refreshToken) {
+    try {
+      const payload = auth.getPayloadRefreshToken(refreshToken);
+      const userId = payload.id;
+      let user = await db.User.findOne({ where: { id: userId }});
+      if(!user) return res.status(401).send({ message: 'token is invalid' });
+      let payload = { id: user.id },
+        newToken = jwt.sign(payload, passportConfig.jwtOptions.secretOrKey),
+        newRefreshToken = auth.getRefreshToken(payload),
+        userToken = user.getUserToken();
+        userToken.token = newToken;
+        await userToken.save();
+        res.cookie('refreshToken', newRefreshToken, auth.COOKIE_OPTIONS);
+
+        res.status(200).send({ message: 'success', token: newToken, refreshToken: newRefreshToken });
+    } catch(error) {
+      if(error.name === 'SequelizeValidationError') {
+        const errObj = {};
+        error.errors.map( er => {
+          errObj[er.path] = er.message;
+        })
+        return res.status(422).json({errorMessage: errObj});
+      }
+      console.log(error);
+      res.status(500).json({ message: error } )
+    }
+  } else {
+    res.status(401).send({ message: 'token is invalid' });
+  }
+})
+
+router.post('/logout', passportConfig.passport.authenticate('jwt', { session: false }), async function(req, res) {
+  await sequelize.transaction(async (t) => {
+    try {
+      let currentUser = req.user,
+        userToken = currentUser.getUserToken();
+      currentUser.refreshToken = null;
+      currentUser.save({ transaction: t });
+      userToken.destroy({ transaction: t });
+      res.clearCookie('refreshToken', auth.COOKIE_OPTIONS);
+
+      res.status(200).send({ message: 'logout successfull' });
+    } catch(error) {
+      console.log(error);
+      res.status(500).json({ message: error } )
     }
   })
-});
+})
 
 router.get('/protected', passportConfig.passport.authenticate('jwt', { session: false }), function(req, res) {
   res.json('Success! You can now see this without a token.');

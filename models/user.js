@@ -12,6 +12,12 @@ module.exports = (sequelize, DataTypes) => {
           allowNull: false
         },
         as: 'bookings'
+      });
+      User.hasOne(models.UserToken, {
+        foreignKey: {
+          name: 'userId',
+          allowNull: false
+        }
       })
     }
   };
@@ -97,6 +103,9 @@ module.exports = (sequelize, DataTypes) => {
     isActive: {
       type: DataTypes.BOOLEAN,
       defaultValue: false
+    },
+    refreshToken: {
+      type: DataTypes.STRING
     },
     confirmationToken: {
       type: DataTypes.STRING
