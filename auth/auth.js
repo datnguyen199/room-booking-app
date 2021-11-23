@@ -7,7 +7,7 @@ exports.COOKIE_OPTIONS = {
   secure: isProduction, // https in production
   signed: true,
   maxAge: eval(process.env.REFRESH_TOKEN_EXPIRY) * 1000,
-  sameSite: "none"
+  // sameSite: "None"
 }
 
 exports.getRefreshToken = (payload) => {

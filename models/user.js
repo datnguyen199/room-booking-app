@@ -17,7 +17,8 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: {
           name: 'userId',
           allowNull: false
-        }
+        },
+        onDelete: 'cascade'
       })
     }
   };
@@ -44,7 +45,7 @@ module.exports = (sequelize, DataTypes) => {
         },
         isUnique: function(value, next) {
           var self = this;
-          User.findOne({ where: { email: value, isActive: true }, attributes: ['id'] })
+          User.findOne({ where: { email: value }, attributes: ['id'] })
             .then(function(err, user) {
               if(err) return next(err);
               if(user && self.id !== user.id) return next('Email already in use!');
@@ -64,7 +65,7 @@ module.exports = (sequelize, DataTypes) => {
       validate: {
         isUnique: function(value, next) {
           var self = this;
-          User.findOne({ where: { userName: value, isActive: true }, attributes: ['id'] })
+          User.findOne({ where: { userName: value }, attributes: ['id'] })
             .then(function(err, user) {
               if(err) return next(err);
               if(user && self.id !== user.id) return next('Username already in use!');
@@ -111,6 +112,9 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING
     },
     confirmationExpireAt: {
+      type: DataTypes.DATE
+    },
+    refreshTokenExpiredAt: {
       type: DataTypes.DATE
     }
   }, {
