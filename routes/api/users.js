@@ -152,7 +152,7 @@ router.post('/sign_up', async(req, res) => {
       let mailData = {
         toEmail: `${user.email}`,
         subject: 'Booking room app',
-        content: `Hi ${user.userName}, Please verify your account by clicking the link: http:\/\/${req.headers.host}\/confirmation\/?token=${verifiedToken}`
+        content: `Hi ${user.userName}, Please verify your account by clicking the link: http:\/\/${req.headers.host}\/api\/v1\/confirmation\/?token=${verifiedToken}`
       };
 
       return sendMailQueue.add(mailData, options);
