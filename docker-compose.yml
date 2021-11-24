@@ -1,0 +1,58 @@
+version: "3.4"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: booking-room-app
+    env_file: ./.env
+    restart: unless-stopped
+    ports:
+      - "${PORT}:${PORT}"
+    volumes:
+      - ./:/app
+    environment:
+      DB_HOST: "db"
+      REDIS_HOST: "redis"
+      REDIS_PORT: "6379"
+    depends_on:
+      - db
+      - redis
+    networks:
+      - db-network
+      - redis-network
+  db:
+    image: mysql:5.7
+    restart: unless-stopped
+    volumes:
+      - .docker/data/db:/var/lib/mysql/
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: rootpass
+    ports:
+      - "3306:3306"
+    expose:
+      - "3306"
+    networks:
+      - db-network
+    # user: 1000:1000
+  redis:
+    image: redis:5-alpine
+    volumes:
+      - .docker/data/redis:/data
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    expose:
+      - "6379"
+    networks:
+      - redis-network
+    # user: 1000:1000
+networks:
+  db-network:
+    driver: bridge
+  redis-network:
+    driver: bridge
