@@ -15,7 +15,7 @@ module.exports = (factory, db) => {
     confirmationExpireAt: new Date(Date.now() + ( 3600 * 1000 * 24))
   });
 
-  factory.extend('user', 'activeUser', { isActive: true, confirmationToken: null, confirmationExpireAt: null });
+  factory.extend('user', 'activeUser', { isActive: true, confirmationToken: null, confirmationExpireAt: null, refreshToken: 'refreshtoken' });
   factory.extend('user', 'guestUser',
     { isGuest: true, isActive: false, userName: factory.sequence('User.userName', n => `guest${n}`) });
 }

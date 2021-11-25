@@ -16,6 +16,7 @@ chai.use(chaiHttp);
 
 describe('User API', () => {
   beforeEach(async () => {
+    await db.UserToken.destroy({ where: {} });
     await db.User.destroy({ where: {} });
   })
 
@@ -37,7 +38,7 @@ describe('User API', () => {
         sinon.assert.calledOnce(addQueue);
       })
 
-      it('sign up successfull with same email of inactive user', async () => {
+      it('sign up failed with same email of other user', async () => {
         let inactiveUser = await factory.create('user');
         let userParams = await factory.attrs('user');
         userParams['email'] = inactiveUser.email;
@@ -45,11 +46,11 @@ describe('User API', () => {
         let res = await chai.request(server)
                             .post('/api/v1/sign_up')
                             .send(userParams);
-        res.should.have.status(201);
-        expect(await db.User.count()).to.equal(2);
+        res.should.have.status(422);
+        expect(await db.User.count()).to.equal(1);
       })
 
-      it('sign up successfull with same userName of inactive user', async () => {
+      it('sign up failed with same userName of other user', async () => {
         let inactiveUser = await factory.create('user');
         let userParams = await factory.attrs('user');
         userParams['userName'] = inactiveUser.userName;
@@ -57,20 +58,8 @@ describe('User API', () => {
         let res = await chai.request(server)
                             .post('/api/v1/sign_up')
                             .send(userParams);
-        res.should.have.status(201);
-        expect(await db.User.count()).to.equal(2);
-      })
-
-      it('sign up successfull with same userName of inactive user', async () => {
-        let inactiveUser = await factory.create('user');
-        let userParams = await factory.attrs('user');
-        userParams['userName'] = inactiveUser.userName;
-
-        let res = await chai.request(server)
-                            .post('/api/v1/sign_up')
-                            .send(userParams);
-        res.should.have.status(201);
-        expect(await db.User.count()).to.equal(2);
+        res.should.have.status(422);
+        expect(await db.User.count()).to.equal(1);
       })
     })
 
@@ -127,6 +116,23 @@ describe('User API', () => {
                                        .expect('Content-Type', /json/)
                                        .expect(200);
         expect(res.body).to.have.property('accessToken');
+        expect(res.body).to.have.property('refreshToken');
+        expect(await db.UserToken.count()).to.equal(1);
+      })
+
+      it('sign in success with active user twice', async () => {
+        let user = await factory.create('activeUser');
+        await request(server).post('/api/v1/sign_in')
+                             .send({userName: user.userName, password: 'Aa@123456' })
+                             .expect('Content-Type', /json/)
+                             .expect(200);
+        let res = await request(server).post('/api/v1/sign_in')
+                                       .send({userName: user.userName, password: 'Aa@123456' })
+                                       .expect('Content-Type', /json/)
+                                       .expect(200);
+        expect(res.body).to.have.property('accessToken');
+        expect(res.body).to.have.property('refreshToken');
+        expect(await db.UserToken.count()).to.equal(1);
       })
 
       it('sign in failed with inactive user', async () => {
