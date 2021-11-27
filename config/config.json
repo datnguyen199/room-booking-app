@@ -7,15 +7,15 @@
     "dialect": "mysql"
   },
   "test": {
-    "username": "root1",
+    "username": "root",
     "password": "1234",
     "database": "booking_room_test",
     "host": "127.0.0.1",
     "dialect": "mysql"
   },
   "production": {
-    "username": "root1",
-    "password": null,
+    "username": "root",
+    "password": "1234",
     "database": "booking_room_production",
     "host": "127.0.0.1",
     "dialect": "mysql"
