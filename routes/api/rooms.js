@@ -9,6 +9,7 @@
  const express = require('express');
  const router = express.Router();
  const db = require('../../models');
+ const esClient = require('../../config/elasticsearch')
  const { Op } = require('sequelize');
 
 router.get('/room_searching', async (req, res) => {
@@ -101,5 +102,100 @@ router.get('/room_searching', async (req, res) => {
 
   res.status(200).send({ data: rooms });
 });
+
+router.get('/es_room_searching', async (req, res) => {
+  let keyword = req.query.param_search || '';
+  let limit = req.query.limit || 10;
+  let offset = req.query.offset || 1;
+
+  let body = {
+    size: limit,
+    from: (offset - 1) * limit,
+    query: {
+      // match_all: {}
+      // match_phrase: {
+      //   'description': {
+      //     'query': keyword,
+      //     'zero_terms_query': 'all'
+      //   }
+      // }
+      bool: {
+        must: [
+          {
+            'multi_match': {
+              'query': keyword,
+              'fields': ['description', 'room_type.room_type_name', 'utilities.utility_name'],
+              'operator': 'OR'
+            }
+          }
+        ]
+      }
+    }
+  };
+  esClient.search({ index: 'es-booking-rooms', body: body }).then(results => {
+    console.log(results);
+    res.status(200).send({ data: results.hits.hits });
+  }).catch(err => {
+    console.log(err);
+    res.status(400).send({ error: err });
+  })
+})
+
+router.get('/es_room_suggestion', async (req, res) => {
+  let keyword = req.query.param_search || '';
+  // let limit = req.query.limit || 10;
+  // let offset = req.query.offset || 1;
+  let body = {
+    // size: limit,
+    // from: (offset - 1) * limit,
+    'query' : {
+      'multi_match': {
+        'query': keyword,
+        'fields': ['description', 'room_type.room_type_name', 'utilities.utility_name'],
+        'operator': 'OR'
+      }
+    },
+    'suggest' : {
+      'text' : keyword,
+      'description_phrase': {
+        'phrase': {
+          'field': 'description',
+          'size': 1,
+          'gram_size': 3,
+          'direct_generator': [ {
+            'field': 'description',
+            'suggest_mode': 'always'
+          } ],
+          'highlight': {
+            'pre_tag': '<em>',
+            'post_tag': '</em>'
+          }
+        }
+      },
+      'suggest-description' : {
+        'term' : {
+          'field' : 'description'
+        }
+      },
+      'suggest-room-type' : {
+        'term' : {
+          'field' : 'room_type.room_type_name'
+        }
+      },
+      'suggest-utilities' : {
+        'term' : {
+          'field' : 'utilities.utility_name'
+        }
+      }
+    }
+  };
+
+  esClient.search({ index: 'es-booking-rooms', body: body }).then(results => {
+    res.status(200).send({ data: results });
+  }).catch(err => {
+    console.log(err);
+    res.status(400).send({ error: err });
+  })
+})
 
  module.exports = router;
