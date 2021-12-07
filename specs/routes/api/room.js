@@ -80,7 +80,7 @@ describe('Room API', () => {
             .end((err, res) => {
               res.should.have.status(200);
               expect(res.body['data'].length).to.equal(2);
-              expect(res.body['data'].map(room => room.id)).to.eql(expectedRoomIds);
+              expect(res.body['data'].map(room => room.id)).to.have.members(expectedRoomIds);
               done();
             })
         })
