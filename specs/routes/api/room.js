@@ -73,7 +73,7 @@ describe('Room API', () => {
           expectedRoomIds = [room1.id, room2.id];
         });
 
-        it('get rooms correctly with filter param search', (done) => {
+        it('when search params satified room name, then get rooms correctly', (done) => {
           chai.request(server)
             .get('/api/v1/room_searching')
             .query({ param_search: 'room' })
@@ -85,7 +85,7 @@ describe('Room API', () => {
             })
         })
 
-        it('get rooms correctly', async () => {
+        it('when search params satified room type, then get rooms correctly', async () => {
           let res = await request(server)
                       .get('/api/v1/room_searching')
                       .query({ param_search: 'roomtype' })
@@ -94,7 +94,7 @@ describe('Room API', () => {
           expect(res.body['data'].map(room => room.id)).to.eql(expectedRoomIds.slice(0, 1));
         })
 
-        it('get rooms correctly', async () => {
+        it('when search params satified utility name, then get rooms correctly', async () => {
           let res = await request(server)
                       .get('/api/v1/room_searching')
                       .query({ param_search: 'utility' })
@@ -103,7 +103,7 @@ describe('Room API', () => {
           expect(res.body['data'].map(room => room.id)).to.eql(expectedRoomIds.slice(1, 2));
         })
 
-        it('get rooms correctly', async () => {
+        it('when search params not satified any filter, then get empty room array', async () => {
           let res = await request(server)
                       .get('/api/v1/room_searching')
                       .query({ param_search: 'nothing' })
@@ -129,7 +129,7 @@ describe('Room API', () => {
           utilityId = utility.id; roomTypeId = roomType1.id;
         })
 
-        it('get rooms correctly', async () => {
+        it('when filter with params search and utility, then get rooms correctly', async () => {
           let res = await request(server)
                       .get('/api/v1/room_searching')
                       .query({ param_search: 'room', utilityIds: `${utilityId}` })
@@ -138,7 +138,7 @@ describe('Room API', () => {
           expect(res.body['data'].map(room => room.id)).to.eql(expectedRoomIds.slice(1, 2));
         })
 
-        it('get rooms correctly', async () => {
+        it('when filter with params search, roomtype, number of bed, then get rooms correctly', async () => {
           let res = await request(server)
                       .get('/api/v1/room_searching')
                       .query({ param_search: 'room', roomTypeIds: `${roomTypeId}`, numberOfBed: 2 })
@@ -147,7 +147,7 @@ describe('Room API', () => {
           expect(res.body['data'].map(room => room.id)).to.eql(expectedRoomIds.slice(0, 1));
         })
 
-        it('get rooms correctly', async () => {
+        it('when filter with params search, roomtype, utility, then get rooms correctly', async () => {
           let res = await request(server)
                       .get('/api/v1/room_searching')
                       .query({ param_search: 'room', roomTypeIds: `${roomTypeId}`, utilityIds: `${utilityId}` })
